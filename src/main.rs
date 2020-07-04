@@ -9,14 +9,29 @@ use std::{
 
 const PATH_TO: &str = "/media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2";
 
-fn try_get_page(content: &str) -> Result<(Option<String>, String)> {
+#[derive(Debug)]
+struct PageParseResult {
+    page: Option<String>,
+    remainder: String,
+}
+
+impl PageParseResult {
+    fn new(page: Option<String>, remainder: &str) -> Self {
+        Self {
+            page,
+            remainder: remainder.to_owned(),
+        }
+    }
+}
+
+fn try_get_page(content: &str) -> Result<PageParseResult> {
     let index_start = match content.find("<page>") {
         Some(i) => i,
-        None => return Ok((None, content.to_owned())),
+        None => return Ok(PageParseResult::new(None, content)),
     };
     let index_end = match content.find("</page>") {
         Some(i) => i,
-        None => return Ok((None, content.to_owned())),
+        None => return Ok(PageParseResult::new(None, content)),
     };
     debug!("Page section index: {} -> {}", index_start, index_end);
     let page_portion: String = content
@@ -25,7 +40,7 @@ fn try_get_page(content: &str) -> Result<(Option<String>, String)> {
         .take(index_end - index_start + 7)
         .collect();
     let remainder: String = content.chars().skip(index_end + 7).collect();
-    Ok((Some(page_portion), remainder))
+    Ok(PageParseResult::new(Some(page_portion), &remainder))
 }
 
 fn parse_page(page: &str) -> Result<String> {
@@ -42,31 +57,31 @@ fn parse_page(page: &str) -> Result<String> {
 }
 
 fn monitor_command(cmd: &mut Child) -> Result<Vec<String>> {
+    let mut pages = vec![];
+    let mut buffer = String::new();
+
     let stdout = cmd
         .stdout
         .as_mut()
         .ok_or_else(|| anyhow!("Couldn't get stdout ref"))?;
     let sdtout_reader = BufReader::new(stdout);
-    let mut pages = vec![];
     let stdout_lines = sdtout_reader.lines();
-    let mut buffer = String::new();
+
     for line in stdout_lines {
         let line = line?;
         buffer += &line;
 
-        let (page, remainder) = try_get_page(&buffer)?;
-        buffer = remainder;
+        let result = try_get_page(&buffer)?;
+        buffer = result.remainder;
 
-        match page {
+        match result.page {
             Some(p) => {
                 pages.push(parse_page(&p)?);
+                if pages.len() % 100 == 0 {
+                    info!("Parsed {} pages", pages.len());
+                }
             }
             None => (),
-        }
-
-        if pages.len() == 50 {
-            cmd.kill()?;
-            break;
         }
     }
     Ok(pages)
@@ -99,9 +114,9 @@ mod tests {
     #[test]
     fn test_try_get_pages() {
         let s = "<page>Foobar</page>b";
-        let (page, remainder) = try_get_page(s).unwrap();
+        let result = try_get_page(s).unwrap();
 
-        assert_eq!("<page>Foobar</page>", page.unwrap());
-        assert_eq!("b", remainder);
+        assert_eq!("<page>Foobar</page>", result.page.unwrap());
+        assert_eq!("b", result.remainder);
     }
 }
