@@ -1,4 +1,5 @@
 /target
 *.xml
+*.json
 flamegraph.svg
 perf.data*
