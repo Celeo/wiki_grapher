@@ -1,2 +1,4 @@
 /target
 *.xml
+flamegraph.svg
+perf.data*

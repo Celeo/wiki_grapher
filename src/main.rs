@@ -8,6 +8,7 @@ use std::{
 };
 
 const PATH_TO: &str = "/media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2";
+const TAG_SIZE: usize = 7;
 
 #[derive(Debug)]
 struct PageParseResult {
@@ -16,15 +17,12 @@ struct PageParseResult {
 }
 
 impl PageParseResult {
-    fn new(page: Option<String>, remainder: &str) -> Self {
-        Self {
-            page,
-            remainder: remainder.to_owned(),
-        }
+    fn new(page: Option<String>, remainder: String) -> Self {
+        Self { page, remainder }
     }
 }
 
-fn try_get_page(content: &str) -> Result<PageParseResult> {
+fn try_get_page(content: String) -> Result<PageParseResult> {
     let index_start = match content.find("<page>") {
         Some(i) => i,
         None => return Ok(PageParseResult::new(None, content)),
@@ -37,10 +35,10 @@ fn try_get_page(content: &str) -> Result<PageParseResult> {
     let page_portion: String = content
         .chars()
         .skip(index_start)
-        .take(index_end - index_start + 7)
+        .take(index_end - index_start + TAG_SIZE)
         .collect();
-    let remainder: String = content.chars().skip(index_end + 7).collect();
-    Ok(PageParseResult::new(Some(page_portion), &remainder))
+    let remainder: String = content.chars().skip(index_end + TAG_SIZE).collect();
+    Ok(PageParseResult::new(Some(page_portion), remainder))
 }
 
 fn parse_page(page: &str) -> Result<String> {
@@ -71,7 +69,7 @@ fn monitor_command(cmd: &mut Child) -> Result<Vec<String>> {
         let line = line?;
         buffer += &line;
 
-        let result = try_get_page(&buffer)?;
+        let result = try_get_page(buffer)?;
         buffer = result.remainder;
 
         match result.page {
