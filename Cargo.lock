@@ -213,15 +213,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26412eb97c6b088a6997e05f69403a802a92d520de2f8e63c2b65f9e0f47c4e8"
 
 [[package]]
-name = "roxmltree"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17dfc6c39f846bfc7d2ec442ad12055d79608d501380789b965d22f9354451f2"
-dependencies = [
- "xmlparser",
-]
-
-[[package]]
 name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -304,7 +295,6 @@ dependencies = [
  "petgraph",
  "pretty_env_logger",
  "regex",
- "roxmltree",
  "serde",
  "serde_json",
 ]
@@ -339,9 +329,3 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
-
-[[package]]
-name = "xmlparser"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52613e655f6f11f63c0fe7d1c3b5ef69e44d96df9b65dab296b441ed0e1125f5"
