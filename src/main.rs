@@ -1,19 +1,18 @@
 use anyhow::Result;
-// use crossbeam::channel::unbounded;
 use log::{debug, info};
 use std::{
     env,
-    fs,
+    fs::write,
     path::Path,
     process::{Command, Stdio},
-    // thread,
 };
 
 mod models;
 mod parsing;
-use parsing::monitor_command;
+use parsing::watch_command;
 
 const PATH_TO: &str = "/media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2";
+const OUTPUT_FILE_NAME: &str = "output.json";
 
 fn main() -> Result<()> {
     if env::var("RUST_LOG").is_err() {
@@ -27,12 +26,13 @@ fn main() -> Result<()> {
         .stdout(Stdio::piped())
         .spawn()?;
 
-    let pages = monitor_command(&mut cmd)?;
+    let pages = watch_command(&mut cmd)?;
     let status = cmd.wait()?;
-    info!("Exit status is {}", status.code().unwrap_or(0));
+    debug!("Command exit status is {}", status.code().unwrap_or(0));
+
     debug!("Writing output file");
-    fs::write(Path::new("output.json"), serde_json::to_string(&pages)?)?;
-    info!("Wrote data to 'output.json'");
+    write(Path::new(OUTPUT_FILE_NAME), serde_json::to_string(&pages)?)?;
+    info!("Wrote data to '{}'", OUTPUT_FILE_NAME);
 
     Ok(())
 }
