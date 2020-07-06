@@ -10,7 +10,7 @@ use std::{
     process::Child,
 };
 
-const BATCH_SIZE: usize = 1000;
+const BATCH_SIZE: usize = 10_000;
 
 lazy_static! {
     /// Regex for capturing in-wiki links with optional disregarded rename.
