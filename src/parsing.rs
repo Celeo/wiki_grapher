@@ -79,7 +79,8 @@ pub(crate) fn watch_command(cmd: &mut Child) -> Result<Vec<PageInfo>> {
 
 #[cfg(test)]
 mod tests {
-    use super::extract_links;
+    use super::{extract_links, parse_page};
+    use roxmltree::Document;
 
     #[test]
     fn test_extract_links() {
@@ -87,5 +88,40 @@ mod tests {
         let links = extract_links(s);
 
         assert_eq!(links, vec!["aa", "aaa"]);
+    }
+
+    #[test]
+    fn test_parse_page() {
+        let doc = Document::parse(
+            r#"<page>
+            <title>AccessibleComputing</title>
+            <ns>0</ns>
+            <id>10</id>
+            <redirect title="Computer accessibility" />
+            <revision>
+            <id>854851586</id>
+            <parentid>834079434</parentid>
+            <timestamp>2018-08-14T06:47:24Z</timestamp>
+            <contributor>
+                <username>Godsy</username>
+                <id>23257138</id>
+            </contributor>
+            <comment>remove from category for seeking instructions on rcats</comment>
+            <model>wikitext</model>
+            <format>text/x-wiki</format>
+            <text bytes="94" xml:space="preserve">#REDIRECT [[Computer accessibility]]
+
+        {{R from move}}
+        {{R from CamelCase}}
+        {{R unprintworthy}}</text>
+            <sha1>42l0cvblwtb4nnupxm6wo000d27t6kf</sha1>
+            </revision>
+        </page>"#,
+        )
+        .unwrap();
+        let (title, text) = parse_page(&doc).unwrap();
+
+        assert_eq!(title, "AccessibleComputing");
+        assert_eq!(text.len(), 118);
     }
 }
