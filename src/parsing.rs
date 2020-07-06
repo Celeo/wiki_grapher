@@ -1,7 +1,7 @@
 use crate::models::PageInfo;
 use anyhow::{anyhow, Result};
 use lazy_static::lazy_static;
-use log::{debug, info};
+use log::{debug, error, info};
 use regex::Regex;
 use roxmltree::Document;
 use std::{
@@ -63,7 +63,14 @@ pub(crate) fn watch_command(cmd: &mut Child) -> Result<Vec<PageInfo>> {
         }
         if line.ends_with("</page>") {
             let doc = Document::parse(&buffer)?;
-            let (title, content) = parse_page(&doc)?;
+            let (title, content) = match parse_page(&doc) {
+                Ok((t, c)) => (t, c),
+                Err(e) => {
+                    error!("Error parsing page: {}", e);
+                    buffer.clear();
+                    continue;
+                }
+            };
             let links = extract_links(content);
             pages.push(PageInfo::new(title, links));
             debug!("Parsed {}", title);
