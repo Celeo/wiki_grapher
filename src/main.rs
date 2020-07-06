@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{debug, info};
+use log::{debug, error, info};
 use std::{
     env,
     fs::write,
@@ -11,8 +11,6 @@ mod models;
 mod parsing;
 use parsing::watch_command;
 
-// TODO set this via CLI args
-const PATH_TO: &str = "/media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2";
 const OUTPUT_FILE_NAME: &str = "output.json";
 
 fn main() -> Result<()> {
@@ -20,10 +18,16 @@ fn main() -> Result<()> {
         env::set_var("RUST_LOG", "wiki_grapher=debug");
     }
     pretty_env_logger::init();
-    info!("Starting");
 
+    let args: Vec<String> = env::args().into_iter().skip(1).collect();
+    if args.is_empty() {
+        error!("Must run with path to compressed Wikipedia database download");
+        return Ok(());
+    }
+
+    info!("Starting");
     let mut cmd = Command::new("bzip2")
-        .args(&["-d", "-c", PATH_TO])
+        .args(&["-d", "-c", &args[0]])
         .stdout(Stdio::piped())
         .spawn()?;
 

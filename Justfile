@@ -2,3 +2,6 @@ default:
   cargo check
   cargo +nightly clippy
   cargo build
+
+r:
+  cargo r -- /media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2
