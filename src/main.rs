@@ -19,7 +19,7 @@ fn main() -> Result<()> {
     }
     pretty_env_logger::init();
 
-    let args: Vec<String> = env::args().into_iter().skip(1).collect();
+    let args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty() {
         error!("Must run with path to compressed Wikipedia database download");
         return Ok(());
