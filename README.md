@@ -1,6 +1,6 @@
 # wiki_grapher
 
-An attempt to parse the [Wikipedia database download](https://en.wikipedia.org/wiki/Wikipedia:Database_download) into a [graph](https://en.wikipedia.org/wiki/Graph_(abstract_data_type) so that it can be [traversed](https://en.wikipedia.org/wiki/Graph_traversal) to get information on links between pages.
+An attempt to parse the [Wikipedia database download](https://en.wikipedia.org/wiki/Wikipedia:Database_download) into a [graph](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) so that it can be [traversed](https://en.wikipedia.org/wiki/Graph_traversal) to get information on links between pages.
 
 ## Installing
 
