@@ -4,10 +4,13 @@ use lazy_static::lazy_static;
 use log::{debug, error, info};
 use regex::Regex;
 use roxmltree::Document;
+use rusqlite::{params, Connection};
 use std::{
     io::{BufRead, BufReader},
     process::Child,
 };
+
+const BATCH_SIZE: usize = 1000;
 
 lazy_static! {
     /// Regex for capturing in-wiki links with optional disregarded rename.
@@ -39,7 +42,7 @@ fn parse_page<'a>(doc: &'a Document) -> Result<(&'a str, &'a str)> {
     Ok((title, content))
 }
 
-pub(crate) fn watch_command(cmd: &mut Child) -> Result<Vec<PageInfo>> {
+pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()> {
     let stdout = cmd
         .stdout
         .as_mut()
@@ -47,6 +50,7 @@ pub(crate) fn watch_command(cmd: &mut Child) -> Result<Vec<PageInfo>> {
     let stdout_reader = BufReader::new(stdout);
     let stdout_lines = stdout_reader.lines();
 
+    let mut pages_parsed = 0u64;
     let mut pages = vec![];
     let mut buffer = String::new();
     let mut skipped_header = false;
@@ -73,15 +77,32 @@ pub(crate) fn watch_command(cmd: &mut Child) -> Result<Vec<PageInfo>> {
             };
             let links = extract_links(content);
             pages.push(PageInfo::new(title, links));
+
             debug!("Parsed {}", title);
-            if pages.len() % 1000 == 0 {
-                info!("Parsed {} pages", pages.len());
+            if pages.len() % BATCH_SIZE == 0 {
+                pages_parsed += pages.len() as u64;
+                info!(
+                    "Flushing batch of pages to disk; {} total pages parsed",
+                    pages_parsed
+                );
+
+                debug!("Opening DB transaction");
+                let tx = conn.transaction()?;
+                for page in &pages {
+                    for (from, to) in page.to_pairs() {
+                        tx.execute(r#"INSERT INTO links VALUES (?1, ?2)"#, params![from, to])?;
+                    }
+                }
+                debug!("Committing DB transaction");
+                tx.commit()?;
+
+                pages.clear();
             }
             buffer.clear();
         }
     }
 
-    Ok(pages)
+    Ok(())
 }
 
 #[cfg(test)]

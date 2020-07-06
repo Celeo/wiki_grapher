@@ -1,8 +1,8 @@
 use anyhow::Result;
 use log::{debug, error, info};
+use rusqlite::{params, Connection};
 use std::{
-    env,
-    fs::write,
+    env, fs,
     path::Path,
     process::{Command, Stdio},
 };
@@ -11,7 +11,36 @@ mod models;
 mod parsing;
 use parsing::watch_command;
 
-const OUTPUT_FILE_NAME: &str = "output.json";
+const DB_FILE_NAME: &str = "data.db";
+const DB_BAK_FILE_NAME: &str = "data.db.bak";
+
+fn setup_db() -> Result<Connection> {
+    debug!("Setting up the DB");
+    let path = Path::new(DB_FILE_NAME);
+    if path.exists() {
+        debug!("DB file already exists");
+        let backup_path = Path::new(DB_BAK_FILE_NAME);
+        if backup_path.exists() {
+            debug!("Removing previous backup file");
+            fs::remove_file(backup_path)?;
+        }
+        debug!("Renaming last db file to the backup");
+        fs::rename(path, backup_path)?;
+    }
+    debug!("Opening connection");
+    let conn = Connection::open(path)?;
+    conn.execute(
+        r#"
+        CREATE TABLE links (
+            page_from TEXT NOT NULL,
+            page_to TEXT NOT NULL
+        )
+    "#,
+        params![],
+    )?;
+    debug!("DB created");
+    Ok(conn)
+}
 
 fn main() -> Result<()> {
     if env::var("RUST_LOG").is_err() {
@@ -31,13 +60,11 @@ fn main() -> Result<()> {
         .stdout(Stdio::piped())
         .spawn()?;
 
-    let pages = watch_command(&mut cmd)?;
+    let conn = setup_db()?;
+    watch_command(&mut cmd, conn)?;
+
     let status = cmd.wait()?;
     debug!("Command exit status is {}", status.code().unwrap_or(0));
-
-    debug!("Writing output file");
-    write(Path::new(OUTPUT_FILE_NAME), serde_json::to_string(&pages)?)?;
-    info!("Wrote data to '{}'", OUTPUT_FILE_NAME);
 
     Ok(())
 }
