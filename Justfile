@@ -1,3 +1,4 @@
 default:
-  cargo check --all
-  cargo build --all
+  cargo check
+  cargo build
+  cargo +nightly clippy
