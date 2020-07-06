@@ -8,3 +8,6 @@ r:
 
 rel:
   cargo build --release
+  cp target/release/wiki_grapher .
+  strip wiki_grapher
+  @echo "Binary available at ./wiki_grapher"

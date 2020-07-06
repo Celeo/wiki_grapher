@@ -4,3 +4,4 @@
 *.db.bak
 flamegraph.svg
 perf.data*
+wiki_grapher
