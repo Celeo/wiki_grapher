@@ -33,9 +33,9 @@ fn parse_page<'a>(doc: &'a Document) -> Result<(&'a str, &'a str)> {
     let content = doc
         .descendants()
         .find(|n| n.has_tag_name("text"))
-        .ok_or_else(|| anyhow!("Could not find <text> node"))?
+        .ok_or_else(|| anyhow!("Could not find <text> node on: {}", title))?
         .text()
-        .ok_or_else(|| anyhow!("Could not get text from text node"))?;
+        .ok_or_else(|| anyhow!("Could not get text from text node on: {}", title))?;
     Ok((title, content))
 }
 
