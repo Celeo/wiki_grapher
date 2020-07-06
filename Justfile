@@ -5,3 +5,6 @@ default:
 
 r:
   cargo r -- /media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2
+
+rel:
+  cargo build --release
