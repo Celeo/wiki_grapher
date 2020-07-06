@@ -11,6 +11,7 @@ mod models;
 mod parsing;
 use parsing::watch_command;
 
+// TODO set this via CLI args
 const PATH_TO: &str = "/media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2";
 const OUTPUT_FILE_NAME: &str = "output.json";
 
