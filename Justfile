@@ -3,8 +3,11 @@ default:
   cargo +nightly clippy
   cargo build
 
+t:
+  cargo t
+
 r:
-  cargo r -- /media/sf_VirtualShareed/enwiki-20200401-pages-articles-multistream.xml.bz2
+  cargo r -- /media/sf_VirtualShareed/enwiki-20200701-pages-articles-multistream.xml.bz2
 
 rel:
   cargo build --release
