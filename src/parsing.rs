@@ -12,8 +12,7 @@ use std::{
     thread,
 };
 
-// FIXME restore to 5k
-const BATCH_SIZE: usize = 1_000;
+const BATCH_SIZE: usize = 5_000;
 
 lazy_static! {
     /// Regex for capturing in-wiki links with optional disregarded rename.
