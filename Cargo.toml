@@ -33,3 +33,7 @@ rusqlite = "0.23.1"
 [[bin]]
 name = "parser"
 path = "src/parser/main.rs"
+
+[[bin]]
+name = "grapher"
+path = "src/grapher/main.rs"

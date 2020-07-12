@@ -1,9 +1,9 @@
 default: build
 
 build:
-  cargo check
-  cargo +nightly clippy
-  cargo build
+  cargo check --all
+  cargo +nightly clippy --all
+  cargo build --all
 
 t:
   cargo t
@@ -12,9 +12,11 @@ r:
   RUST_LOG=parser=debug cargo r --bin parser -- /media/sf_VirtualShareed/enwiki-20200701-pages-articles-multistream1.xml-p1p30303.bz2
 
 release:
-  cargo build --release
+  cargo build --release --all
   cp target/release/parser .
+  cp target/release/grapher .
   strip parser
+  strip grapher
 
 alias rel := release
 
