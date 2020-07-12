@@ -7,6 +7,7 @@ use regex::Regex;
 use roxmltree::Document;
 use rusqlite::{params, Connection};
 use std::{
+    collections::HashMap,
     io::{BufRead, BufReader},
     process::Child,
     thread,
@@ -44,16 +45,43 @@ fn parse_page<'a>(doc: &'a Document) -> Result<(&'a str, &'a str)> {
     Ok((title, content))
 }
 
+/// Save the pages to the DB.
+///
+/// First saves the "from pages" names to the "pages" table, and then
+/// uses the auto-increment ids from those inserts to store all of the
+/// links in the "links" table.
 fn save_pages(conn: &mut Connection, pages: &[PageInfo]) -> Result<()> {
+    debug!("Saving pages");
+
+    let from_names: Vec<_> = pages.iter().map(|p| &p.title).collect();
+    let mut from_name_ids: HashMap<String, isize> = HashMap::new();
+
+    for name in from_names {
+        conn.execute("INSERT INTO pages (name) VALUES (?1)", params![name])?;
+        let id = conn.query_row("SELECT last_insert_rowid() FROM pages", params![], |row| {
+            row.get::<usize, isize>(0)
+        })?;
+        from_name_ids.insert(name.to_owned(), id);
+    }
+
     debug!("Opening DB transaction");
     let tx = conn.transaction()?;
     for page in pages {
         for (from, to) in page.to_pairs() {
-            tx.execute(r#"INSERT INTO links VALUES (?1, ?2)"#, params![from, to])?;
+            tx.execute(
+                "INSERT INTO links VALUES (?1, ?2)",
+                params![
+                    from_name_ids
+                        .get(from)
+                        .ok_or_else(|| anyhow!("No id for from name {}", from))?,
+                    to
+                ],
+            )?;
         }
     }
     debug!("Committing DB transaction");
     tx.commit()?;
+
     Ok(())
 }
 

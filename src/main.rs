@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::{debug, error, info};
-use rusqlite::{params, Connection};
+use rusqlite::Connection;
 use std::{
     env, fs,
     path::Path,
@@ -27,16 +27,23 @@ fn setup_db() -> Result<Connection> {
         debug!("Renaming last db file to the backup");
         fs::rename(path, backup_path)?;
     }
-    debug!("Opening connection");
+    debug!("Opening connection to create tables");
     let conn = Connection::open(path)?;
-    conn.execute(
-        r#"
+
+    conn.execute_batch(
+        "
+        CREATE TABLE pages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        );
+
         CREATE TABLE links (
-            page_from TEXT NOT NULL,
-            page_to TEXT NOT NULL
-        )
-    "#,
-        params![],
+            page_from INTEGER NOT NULL,
+            page_to TEXT NOT NULL,
+
+            FOREIGN KEY(page_from) REFERENCES pages(id)
+        );
+    ",
     )?;
     debug!("DB created");
     Ok(conn)
