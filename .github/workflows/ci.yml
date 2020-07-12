@@ -29,6 +29,8 @@ jobs:
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - name: Install clippy
       run: rustup component add clippy
+    - name: Install sqlite
+      run: apt-get update && apt-get install -y sqlite
     - name: Run clippy
       run: cargo clippy -- -D warnings
     - name: Run tests
