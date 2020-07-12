@@ -2,6 +2,17 @@
 
 An attempt to parse the [Wikipedia database download](https://en.wikipedia.org/wiki/Wikipedia:Database_download) into a [graph](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) so that it can be [traversed](https://en.wikipedia.org/wiki/Graph_traversal) to get information on links between pages.
 
+## Note
+
+This project is still very much _in progress_.
+
+| Feature | Status |
+| - | - |
+| Parse a data dump portion | Done |
+| Parse the entire wiki dump | Theoretically done but not proven |
+| Load the data into a graph | Not started |
+| Able to traverse nodes to find paths | Not started |
+
 ## Installing
 
 ### The binary
