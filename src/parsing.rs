@@ -12,7 +12,7 @@ use std::{
     thread,
 };
 
-const BATCH_SIZE: usize = 10_000;
+const BATCH_SIZE: usize = 5_000;
 
 lazy_static! {
     /// Regex for capturing in-wiki links with optional disregarded rename.
@@ -42,6 +42,19 @@ fn parse_page<'a>(doc: &'a Document) -> Result<(&'a str, &'a str)> {
         .text()
         .ok_or_else(|| anyhow!("Could not get text from text node on: {}", title))?;
     Ok((title, content))
+}
+
+fn save_pages(conn: &mut Connection, pages: &[PageInfo]) -> Result<()> {
+    debug!("Opening DB transaction");
+    let tx = conn.transaction()?;
+    for page in pages {
+        for (from, to) in page.to_pairs() {
+            tx.execute(r#"INSERT INTO links VALUES (?1, ?2)"#, params![from, to])?;
+        }
+    }
+    debug!("Committing DB transaction");
+    tx.commit()?;
+    Ok(())
 }
 
 pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()> {
@@ -108,6 +121,11 @@ pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()>
                 Ok(d) => d,
                 Err(_) => {
                     debug!("Parsed page receiver was terminated");
+                    if !pages.is_empty() {
+                        info!("Flushing remaining in-memory pages to disk");
+                        save_pages(&mut conn, &pages)
+                            .expect("Could not flush final batch of pages");
+                    }
                     break;
                 }
             };
@@ -119,18 +137,7 @@ pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()>
                     BATCH_SIZE, pages_parsed
                 );
 
-                debug!("Opening DB transaction");
-                let tx = conn
-                    .transaction()
-                    .expect("Could not start transaction in DB");
-                for page in &pages {
-                    for (from, to) in page.to_pairs() {
-                        tx.execute(r#"INSERT INTO links VALUES (?1, ?2)"#, params![from, to])
-                            .expect("Could not run query against DB");
-                    }
-                }
-                debug!("Committing DB transaction");
-                tx.commit().expect("Could not close transaction in DB");
+                save_pages(&mut conn, &pages).expect("Could not save to DB");
                 pages.clear();
             }
         }

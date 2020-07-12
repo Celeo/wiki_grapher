@@ -1,7 +1,6 @@
 /target
 *.xml
-*.db
-*.db.bak
+*.db*
 flamegraph.svg
 perf.data*
 wiki_grapher
