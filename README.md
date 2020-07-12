@@ -21,9 +21,14 @@ This project is still very much _in progress_.
 1. `cd wiki_grapher`
 1. `cargo build`
 
+I use [just](https://github.com/casey/just), but you don't have to.
+
 ### The database download
 
-Go to the [download](https://en.wikipedia.org/wiki/Wikipedia:Database_download) page and download the torrent.
+There are 2 main options:
+
+1. Go to [this](https://en.wikipedia.org/wiki/Wikipedia:Database_download) page and download & run the torrent
+2. Go to [this](https://dumps.wikimedia.org/backup-index.html) page, click on the most recently-completed "enwiki" link, and then download the "enwiki-[date]-pages-articles-multistream.xml.bz2" file
 
 ## Using
 
