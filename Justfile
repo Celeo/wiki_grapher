@@ -14,3 +14,11 @@ rel:
   cp target/release/wiki_grapher .
   strip wiki_grapher
   @echo -e "\nBinary available at ./wiki_grapher"
+
+db_to_csv:
+  #!/usr/bin/bash
+  sqlite3 data.db << EOF
+  .mode csv
+  .output links.csv
+  select name, page_to from links inner join pages on pages.id == links.page_from;
+  EOF
