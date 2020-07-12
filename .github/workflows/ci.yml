@@ -30,7 +30,7 @@ jobs:
     - name: Install clippy
       run: rustup component add clippy
     - name: Install sqlite
-      run: sudo apt-get update && sudo apt-get install -y sqlite
+      run: sudo apt-get update && sudo apt-get install -y sqlite libsqlite3-0 libsqlite3-dev
     - name: Run clippy
       run: cargo clippy -- -D warnings
     - name: Run tests
