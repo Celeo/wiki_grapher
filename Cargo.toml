@@ -8,9 +8,15 @@ readme = "README.md"
 homepage = "https://github.com/celeo/wiki_parser"
 repository = "https://github.com/celeo/wiki_parser"
 license = "MIT OR Apache-2.0"
-exclude = []
-keywords = []
-categories = []
+exclude = [
+  ".github"
+]
+keywords = [
+  "wikipedia"
+]
+categories = [
+  "command-line-utilies"
+]
 
 [dependencies]
 anyhow = "1.0.31"

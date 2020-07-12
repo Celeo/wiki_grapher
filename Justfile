@@ -9,12 +9,14 @@ t:
   cargo t
 
 r:
-  cargo r -- /media/sf_VirtualShareed/enwiki-20200701-pages-articles-multistream1.xml-p1p30303.bz2
+  RUST_LOG=parser=debug cargo r --bin parser -- /media/sf_VirtualShareed/enwiki-20200701-pages-articles-multistream1.xml-p1p30303.bz2
 
-rel:
+release:
   cargo build --release
   cp target/release/parser .
   strip parser
+
+alias rel := release
 
 db_to_csv:
   #!/usr/bin/bash
