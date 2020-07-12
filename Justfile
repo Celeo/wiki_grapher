@@ -1,4 +1,6 @@
-default:
+default: build
+
+build:
   cargo check
   cargo +nightly clippy
   cargo build
@@ -11,9 +13,8 @@ r:
 
 rel:
   cargo build --release
-  cp target/release/wiki_grapher .
-  strip wiki_grapher
-  @echo -e "\nBinary available at ./wiki_grapher"
+  cp target/release/parser .
+  strip parser
 
 db_to_csv:
   #!/usr/bin/bash
@@ -22,3 +23,8 @@ db_to_csv:
   .output links.csv
   select name, page_to from links inner join pages on pages.id == links.page_from;
   EOF
+
+clean:
+  rm data.*
+  rm *.csv
+  rm parser

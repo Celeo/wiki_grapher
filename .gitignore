@@ -1,7 +1,9 @@
 /target
+
 *.xml
 *.db*
 flamegraph.svg
 perf.data*
-wiki_grapher
 *.csv
+
+/parser

@@ -51,7 +51,7 @@ fn setup_db() -> Result<Connection> {
 
 fn main() -> Result<()> {
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "wiki_grapher=debug");
+        env::set_var("RUST_LOG", "parser=debug");
     }
     pretty_env_logger::init();
 
