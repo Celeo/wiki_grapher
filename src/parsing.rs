@@ -7,13 +7,13 @@ use regex::Regex;
 use roxmltree::Document;
 use rusqlite::{params, Connection};
 use std::{
-    collections::HashMap,
     io::{BufRead, BufReader},
     process::Child,
     thread,
 };
 
-const BATCH_SIZE: usize = 5_000;
+// FIXME restore to 5k
+const BATCH_SIZE: usize = 1_000;
 
 lazy_static! {
     /// Regex for capturing in-wiki links with optional disregarded rename.
@@ -52,34 +52,22 @@ fn parse_page<'a>(doc: &'a Document) -> Result<(&'a str, &'a str)> {
 /// links in the "links" table.
 fn save_pages(conn: &mut Connection, pages: &[PageInfo]) -> Result<()> {
     debug!("Saving pages");
-
-    let from_names: Vec<_> = pages.iter().map(|p| &p.title).collect();
-    let mut from_name_ids: HashMap<String, isize> = HashMap::new();
-
-    for name in from_names {
-        conn.execute("INSERT INTO pages (name) VALUES (?1)", params![name])?;
-        let id = conn.query_row("SELECT last_insert_rowid() FROM pages", params![], |row| {
-            row.get::<usize, isize>(0)
-        })?;
-        from_name_ids.insert(name.to_owned(), id);
+    let tx = conn.transaction()?;
+    for page in pages {
+        tx.execute("INSERT INTO pages (name) VALUES (?1)", params![page.title])?;
     }
+    tx.commit()?;
 
-    debug!("Opening DB transaction");
+    debug!("Saving links");
     let tx = conn.transaction()?;
     for page in pages {
         for (from, to) in page.to_pairs() {
             tx.execute(
-                "INSERT INTO links VALUES (?1, ?2)",
-                params![
-                    from_name_ids
-                        .get(from)
-                        .ok_or_else(|| anyhow!("No id for from name {}", from))?,
-                    to
-                ],
+                "INSERT INTO links SELECT id, ?1 FROM pages WHERE name = ?2",
+                params![to, from],
             )?;
         }
     }
-    debug!("Committing DB transaction");
     tx.commit()?;
 
     Ok(())
