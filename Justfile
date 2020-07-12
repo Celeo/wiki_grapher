@@ -13,4 +13,4 @@ rel:
   cargo build --release
   cp target/release/wiki_grapher .
   strip wiki_grapher
-  @echo "Binary available at ./wiki_grapher"
+  @echo -e "\nBinary available at ./wiki_grapher"
