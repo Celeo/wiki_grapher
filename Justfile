@@ -14,24 +14,25 @@ rp:
 rg:
   RUST_LOG=grapher=debug cargo r --bin grapher
 
-release:
+build_release:
   cargo build --release --all
   cp target/release/parser .
   cp target/release/grapher .
   strip parser
   strip grapher
 
-alias rel := release
+alias rel := build_release
 
-db_to_csv:
-  #!/usr/bin/bash
-  sqlite3 data.db << EOF
-  .mode csv
-  .output links.csv
-  select name, page_to from links inner join pages on pages.id == links.page_from;
-  EOF
+# db_to_csv:
+#   #!/usr/bin/bash
+#   sqlite3 data.db << EOF
+#   .mode csv
+#   .output links.csv
+#   select name, page_to from links inner join pages on pages.id == links.page_from;
+#   EOF
 
 clean:
-  rm data.*
-  rm *.csv
+  rm *.db*
+  rm *.csv*
   rm parser
+  rm grapher

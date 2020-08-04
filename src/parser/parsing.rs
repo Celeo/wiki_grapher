@@ -5,9 +5,9 @@ use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
 use regex::Regex;
 use roxmltree::Document;
-use rusqlite::{params, Connection};
 use std::{
-    io::{BufRead, BufReader},
+    fs::File,
+    io::{BufRead, BufReader, Write},
     process::Child,
     thread,
 };
@@ -44,35 +44,22 @@ fn parse_page<'a>(doc: &'a Document) -> Result<(&'a str, &'a str)> {
     Ok((title, content))
 }
 
-/// Save the pages to the DB.
-///
-/// First saves the "from pages" names to the "pages" table, and then
-/// uses the auto-increment ids from those inserts to store all of the
-/// links in the "links" table.
-fn save_pages(conn: &mut Connection, pages: &[PageInfo]) -> Result<()> {
+/// Save the pages to the CSV file.
+fn save_pages(file: &mut File, pages: &[PageInfo]) -> Result<()> {
     debug!("Saving pages");
-    let tx = conn.transaction()?;
+    let mut buffer = String::new();
     for page in pages {
-        tx.execute("INSERT INTO pages (name) VALUES (?1)", params![page.title])?;
-    }
-    tx.commit()?;
-
-    debug!("Saving links");
-    let tx = conn.transaction()?;
-    for page in pages {
-        for (from, to) in page.to_pairs() {
-            tx.execute(
-                "INSERT INTO links SELECT id, ?1 FROM pages WHERE name = ?2",
-                params![to, from],
-            )?;
+        if page.links.is_empty() {
+            continue;
         }
+        buffer += &format!("{}\n", page.to_csv_line());
     }
-    tx.commit()?;
-
+    file.write_all(buffer.as_bytes())?;
     Ok(())
 }
 
-pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()> {
+/// TODO
+pub(crate) fn watch_command(cmd: &mut Child, mut file: File) -> Result<()> {
     // get running command output, line by line
     let stdout = cmd
         .stdout
@@ -138,7 +125,7 @@ pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()>
                     debug!("Parsed page receiver was terminated");
                     if !pages.is_empty() {
                         info!("Flushing remaining in-memory pages to disk");
-                        save_pages(&mut conn, &pages)
+                        save_pages(&mut file, &pages)
                             .expect("Could not flush final batch of pages");
                     }
                     break;
@@ -152,7 +139,7 @@ pub(crate) fn watch_command(cmd: &mut Child, mut conn: Connection) -> Result<()>
                     BATCH_SIZE, pages_parsed
                 );
 
-                save_pages(&mut conn, &pages).expect("Could not save to DB");
+                save_pages(&mut file, &pages).expect("Could not save to DB");
                 pages.clear();
             }
         }

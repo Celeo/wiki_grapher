@@ -1,8 +1,8 @@
 use anyhow::Result;
 use log::{debug, error, info};
-use rusqlite::Connection;
 use std::{
-    env, fs,
+    env,
+    fs::{self, File},
     path::Path,
     process::{Command, Stdio},
 };
@@ -11,42 +11,25 @@ mod models;
 mod parsing;
 use parsing::watch_command;
 
-const DB_FILE_NAME: &str = "data.db";
-const DB_BAK_FILE_NAME: &str = "data.db.bak";
+const CSV_FILE_NAME: &str = "data.csv";
+const CSV_BAK_FILE_NAME: &str = "data.csv.bak";
 
-fn setup_db() -> Result<Connection> {
-    debug!("Setting up the DB");
-    let path = Path::new(DB_FILE_NAME);
+fn setup_csv() -> Result<File> {
+    debug!("Setting up the CSV file");
+    let path = Path::new(CSV_FILE_NAME);
     if path.exists() {
-        debug!("DB file already exists");
-        let backup_path = Path::new(DB_BAK_FILE_NAME);
+        debug!("CSV file already exists");
+        let backup_path = Path::new(CSV_BAK_FILE_NAME);
         if backup_path.exists() {
             debug!("Removing previous backup file");
             fs::remove_file(backup_path)?;
         }
-        debug!("Renaming last db file to the backup");
+        debug!("Renaming last CSV file to the backup");
         fs::rename(path, backup_path)?;
     }
-    debug!("Opening connection to create tables");
-    let conn = Connection::open(path)?;
-
-    conn.execute_batch(
-        "
-        CREATE TABLE pages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
-        );
-
-        CREATE TABLE links (
-            page_from INTEGER NOT NULL,
-            page_to TEXT NOT NULL,
-
-            FOREIGN KEY(page_from) REFERENCES pages(id)
-        );
-    ",
-    )?;
     debug!("DB created");
-    Ok(conn)
+    let f = File::create(CSV_FILE_NAME)?;
+    Ok(f)
 }
 
 fn main() -> Result<()> {
@@ -67,8 +50,8 @@ fn main() -> Result<()> {
         .stdout(Stdio::piped())
         .spawn()?;
 
-    let conn = setup_db()?;
-    watch_command(&mut cmd, conn)?;
+    let file = setup_csv()?;
+    watch_command(&mut cmd, file)?;
 
     let status = cmd.wait()?;
     debug!("Command exit status is {}", status.code().unwrap_or(0));
